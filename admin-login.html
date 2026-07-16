@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เข้าสู่ระบบเจ้าของหอพัก — DormCRU</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="topbar"><div class="container" id="site-nav"></div></header>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2>สำหรับเจ้าของหอพัก / แอดมิน</h2>
+    <p class="muted" style="margin-top:-8px">เข้าสู่ระบบหลังบ้านเพื่อจัดการห้องพักและตรวจสอบการจอง</p>
+    <form id="loginForm">
+      <div class="form-field">
+        <label>ชื่อผู้ใช้</label>
+        <input type="text" id="username" required placeholder="admin">
+      </div>
+      <div class="form-field">
+        <label>รหัสผ่าน</label>
+        <input type="password" id="password" required placeholder="••••••••">
+        <div class="form-error" id="err">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">เข้าสู่ระบบหลังบ้าน</button>
+    </form>
+    <p class="form-hint" style="text-align:center">บัญชีทดลอง: username <strong>admin</strong> / password <strong>admin1234</strong></p>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+renderNav();
+document.getElementById('loginForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const owners = dbGet(DB_KEYS.OWNERS, []);
+  const found = owners.find(o=>o.username===username && o.password===password);
+  if(!found){ document.getElementById('err').style.display='block'; return; }
+  dbSet(DB_KEYS.ADMIN_SESSION, { username: found.username, name: found.name });
+  toast('เข้าสู่ระบบหลังบ้านสำเร็จ','success');
+  setTimeout(()=> location.href = 'admin-dashboard.html', 500);
+});
+</script>
+</body>
+</html>

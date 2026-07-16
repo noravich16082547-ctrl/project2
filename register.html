@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สมัครสมาชิก — DormCRU</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="topbar"><div class="container" id="site-nav"></div></header>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2>สมัครสมาชิกนักศึกษา</h2>
+    <p class="muted" style="margin-top:-8px">ใช้อีเมลเดียวกับที่จะใช้จองห้องพัก ป้องกันการสแปมจอง</p>
+    <form id="regForm">
+      <div class="form-field">
+        <label>ชื่อ-นามสกุล</label>
+        <input type="text" id="name" required placeholder="เช่น สมชาย ใจดี">
+      </div>
+      <div class="form-field">
+        <label>รหัสนักศึกษา</label>
+        <input type="text" id="sid" required placeholder="เช่น 68123456789">
+      </div>
+      <div class="form-field">
+        <label>อีเมล</label>
+        <input type="email" id="email" required placeholder="youremail@crru.ac.th">
+      </div>
+      <div class="form-field">
+        <label>เบอร์โทรศัพท์</label>
+        <input type="tel" id="phone" required placeholder="08x-xxx-xxxx">
+      </div>
+      <div class="form-field">
+        <label>รหัสผ่าน</label>
+        <input type="password" id="password" required minlength="6" placeholder="อย่างน้อย 6 ตัวอักษร">
+        <div class="form-error" id="err">อีเมลนี้ถูกใช้สมัครแล้ว</div>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">สมัครสมาชิก</button>
+    </form>
+    <p style="text-align:center;margin-top:16px;font-size:.9rem">มีบัญชีอยู่แล้ว? <a href="login.html" style="color:var(--forest);font-weight:600">เข้าสู่ระบบ</a></p>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+renderNav();
+document.getElementById('regForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const users = dbGet(DB_KEYS.USERS, []);
+  if(users.some(u=>u.email===email)){
+    document.getElementById('err').style.display='block';
+    return;
+  }
+  const newUser = {
+    name: document.getElementById('name').value.trim(),
+    sid: document.getElementById('sid').value.trim(),
+    email,
+    phone: document.getElementById('phone').value.trim(),
+    password: document.getElementById('password').value
+  };
+  users.push(newUser);
+  dbSet(DB_KEYS.USERS, users);
+  dbSet(DB_KEYS.SESSION, { email: newUser.email, name: newUser.name });
+  toast('สมัครสมาชิกสำเร็จ ยินดีต้อนรับ '+newUser.name,'success');
+  setTimeout(()=> location.href = 'index.html', 600);
+});
+</script>
+</body>
+</html>

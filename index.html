@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DormCRU — หาหอพักใกล้ราชภัฏเชียงราย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="topbar"><div class="container" id="site-nav"></div></header>
+
+<section class="hero">
+  <div class="container">
+    <div>
+      <span class="eyebrow">🎓 สำหรับน้องปี 1 มร.ชร.</span>
+      <h1>หาหอพักใกล้ราชภัฏเชียงราย ในที่เดียว</h1>
+      <p class="lead">เช็คห้องว่างแบบเรียลไทม์ เปรียบเทียบราคา ระยะทางจากประตูมอ แล้วจองพร้อมมัดจำออนไลน์ได้ทันที</p>
+    </div>
+    <div class="walk-rings" aria-hidden="true">
+      <svg viewBox="0 0 340 340">
+        <circle cx="170" cy="170" r="150" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+        <circle cx="170" cy="170" r="105" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+        <circle cx="170" cy="170" r="60" fill="none" stroke="rgba(232,163,61,.5)" stroke-width="1.5" stroke-dasharray="4 5"/>
+        <text x="170" y="120" text-anchor="middle" class="gate-label" fill="rgba(255,255,255,.5)">1 กม.</text>
+        <text x="170" y="75" text-anchor="middle" class="gate-label" fill="rgba(255,255,255,.4)">1.5 กม.</text>
+        <circle cx="170" cy="170" r="7" fill="#E8A33D"/>
+        <text x="170" y="196" text-anchor="middle" class="gate-label" font-weight="600">ประตูมอ</text>
+        <circle cx="205" cy="120" r="5" fill="#fff"/>
+        <circle cx="120" cy="140" r="5" fill="#fff"/>
+        <circle cx="230" cy="205" r="5" fill="#fff"/>
+        <circle cx="110" cy="220" r="5" fill="#fff"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="search-panel">
+    <div class="search-grid" id="filterForm">
+      <div class="field">
+        <label>ประเภทหอพัก</label>
+        <select id="f-hallType">
+          <option value="">ทุกประเภท</option>
+          <option value="หอหญิงล้วน">หอหญิงล้วน</option>
+          <option value="หอชายล้วน">หอชายล้วน</option>
+          <option value="หอรวม">หอรวม</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>ประเภทห้อง</label>
+        <select id="f-roomType">
+          <option value="">พัดลม / แอร์</option>
+          <option value="fan">พัดลม</option>
+          <option value="air">แอร์</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>ประตูอ้างอิง</label>
+        <select id="f-gate">
+          <option value="front">ประตูหน้ามอ</option>
+          <option value="back">ประตูหลังมอ</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>ระยะไม่เกิน: <span class="price-tag" id="distVal">2.0 กม.</span></label>
+        <input type="range" id="f-dist" min="0.2" max="2" step="0.1" value="2">
+      </div>
+      <div class="field" style="align-self:end">
+        <button class="btn btn-primary btn-block" id="btnSearch">ค้นหา</button>
+      </div>
+    </div>
+    <div class="range-row" style="margin-top:14px">
+      <label class="muted" style="font-size:.85rem;white-space:nowrap">ราคา/เดือน</label>
+      <input type="range" id="f-priceMin" min="1500" max="4000" step="100" value="1500">
+      <input type="range" id="f-priceMax" min="1500" max="4000" step="100" value="4000">
+      <span class="price-tag" id="priceVal">1,500 - 4,000 บาท</span>
+    </div>
+  </div>
+</div>
+
+<section class="section container">
+  <div class="section-head">
+    <h2>หอพักแนะนำ</h2>
+    <span class="count" id="resultCount"></span>
+  </div>
+  <div class="dorm-grid" id="dormGrid"></div>
+</section>
+
+<section class="section container">
+  <div class="qr-box">
+    <img id="qrcode" width="110" height="110" alt="QR โค้ดเปิดเว็บ DormCRU บนมือถือ" style="background:#fff;border-radius:8px">
+    <div>
+      <h3 style="color:#fff">สแกนเพื่อเปิดเว็บนี้บนมือถือ</h3>
+      <p style="color:rgba(255,255,255,.75);margin:0">ใช้งานได้ทั้งบนคอมและมือถือ พกเว็บ DormCRU ติดตัวไปดูหอได้ทุกที่</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container flex-between">
+    <span>© 2026 DormCRU — โปรเจคหอพักนักศึกษา มหาวิทยาลัยราชภัฏเชียงราย</span>
+    <span>ทำด้วย 💚 เพื่อน้องปี 1</span>
+  </div>
+</footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+renderNav('search');
+
+const distValEl = document.getElementById('distVal');
+document.getElementById('f-dist').addEventListener('input', e=> distValEl.textContent = Number(e.target.value).toFixed(1)+' กม.');
+
+const priceMinEl = document.getElementById('f-priceMin');
+const priceMaxEl = document.getElementById('f-priceMax');
+const priceValEl = document.getElementById('priceVal');
+function syncPrice(){
+  let min = +priceMinEl.value, max = +priceMaxEl.value;
+  if(min > max){ [priceMinEl.value, priceMaxEl.value] = [max, min]; min=+priceMinEl.value; max=+priceMaxEl.value; }
+  priceValEl.textContent = fmtBaht(min)+' - '+fmtBaht(max)+' บาท';
+}
+priceMinEl.addEventListener('input', syncPrice);
+priceMaxEl.addEventListener('input', syncPrice);
+
+function dormCardHtml(d){
+  const vac = totalVacancy(d);
+  const wished = getWishlist().includes(d.id);
+  const gate = CRRU_GATE.front;
+  const distFront = d.distFront.toFixed(1);
+  return `
+  <div class="card-dorm">
+    <a href="dorm-detail.html?id=${d.id}" class="card-media">
+      <img src="${d.images[0]}" alt="${d.name}" loading="lazy">
+      <span class="badge-type">${d.hallType}</span>
+      <span class="badge-vacancy ${vac===0?'full':''}">${vac===0?'เต็ม':'ว่าง '+vac+' ห้อง'}</span>
+    </a>
+    <button class="wishlist-btn ${wished?'active':''}" data-wish="${d.id}" aria-label="บันทึกที่ถูกใจ">${wished?'❤️':'🤍'}</button>
+    <div class="card-body">
+      <a href="dorm-detail.html?id=${d.id}"><h3>${d.name}</h3></a>
+      <div class="card-meta">
+        <span class="walk-chip">🚶 ${distFront} กม. จากประตูหน้ามอ</span>
+      </div>
+      <div class="card-meta">${facilityIcons(d.facilities)}</div>
+      <div class="card-price">
+        <div class="amount">${fmtBaht(minPrice(d))}<small> บาท/เดือน เริ่มต้น</small></div>
+        <a href="dorm-detail.html?id=${d.id}" class="btn btn-outline btn-sm">ดูรายละเอียด</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+function applyFilters(){
+  const hallType = document.getElementById('f-hallType').value;
+  const roomType = document.getElementById('f-roomType').value;
+  const gate = document.getElementById('f-gate').value;
+  const maxDist = +document.getElementById('f-dist').value;
+  const min = +priceMinEl.value, max = +priceMaxEl.value;
+
+  let dorms = getDorms().filter(d=>{
+    if(hallType && d.hallType !== hallType) return false;
+    const dist = gate === 'front' ? d.distFront : d.distBack;
+    if(dist > maxDist) return false;
+    const rooms = roomType ? d.rooms.filter(r=>r.code===roomType) : d.rooms;
+    if(rooms.length===0) return false;
+    const inPriceRange = rooms.some(r => r.price >= min && r.price <= max);
+    if(!inPriceRange) return false;
+    return true;
+  });
+
+  const grid = document.getElementById('dormGrid');
+  document.getElementById('resultCount').textContent = `พบ ${dorms.length} หอพัก`;
+  if(dorms.length===0){
+    grid.innerHTML = '';
+    grid.insertAdjacentHTML('afterend', `<div class="empty-state" id="emptyMsg"><div class="emoji">🏠💭</div><p>ไม่พบหอพักตามเงื่อนไขที่เลือก ลองขยายช่วงราคาหรือระยะทางดูนะ</p></div>`);
+  }else{
+    document.getElementById('emptyMsg')?.remove();
+    grid.innerHTML = dorms.map(dormCardHtml).join('');
+  }
+  document.querySelectorAll('[data-wish]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const now = toggleWishlist(btn.dataset.wish);
+      if(now !== false){
+        btn.classList.toggle('active', now);
+        btn.textContent = now ? '❤️' : '🤍';
+        toast(now ? 'บันทึกเข้ารายการที่ถูกใจแล้ว' : 'นำออกจากรายการที่ถูกใจแล้ว','success');
+      }
+    });
+  });
+}
+
+document.getElementById('btnSearch').addEventListener('click', applyFilters);
+applyFilters();
+
+// QR code is decorative only — generated via a simple <img>, never via a
+// blocking third-party script. If the QR image host is unreachable it just
+// fails to load quietly; it can never break search/filter/listing above.
+try{
+  const qrUrl = location.href.replace(/index\.html.*$/,'');
+  document.getElementById('qrcode').src =
+    'https://api.qrserver.com/v1/create-qr-code/?size=110x110&color=1F3A2E&bgcolor=ffffff&data=' + encodeURIComponent(qrUrl);
+}catch(e){ /* QR code is non-essential, ignore failures */ }
+</script>
+</body>
+</html>

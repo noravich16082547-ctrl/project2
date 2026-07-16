@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จองห้องพัก — DormCRU</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="topbar"><div class="container" id="site-nav"></div></header>
+
+<section class="section container" id="bookingFormSection" style="display:none">
+  <div class="detail-layout">
+    <div>
+      <h2>ยืนยันการจองห้องพัก</h2>
+      <div class="auth-card" style="padding:24px" id="bookingSummary"></div>
+    </div>
+    <div class="booking-card">
+      <h3 style="margin-top:0">อัปโหลดสลิปมัดจำ</h3>
+      <p class="form-hint">มัดจำ <strong id="depositAmount"></strong> บาท โอนเข้าบัญชี <strong>DormCRU (ตัวอย่าง) 123-4-56789-0</strong></p>
+      <div class="form-field">
+        <div class="upload-drop" id="dropZone">
+          <div id="dropText">📎 คลิกเพื่อเลือกไฟล์สลิปโอนเงิน (jpg, png)</div>
+          <div class="upload-preview" id="previewWrap" style="display:none"><img id="previewImg" src=""></div>
+        </div>
+        <input type="file" id="slipInput" accept="image/*" style="display:none">
+        <div class="form-error" id="slipErr">กรุณาแนบสลิปโอนเงินก่อนยืนยันการจอง</div>
+      </div>
+      <button class="btn btn-primary btn-block" id="btnConfirm">ยืนยันการจอง</button>
+    </div>
+  </div>
+</section>
+
+<section class="section container">
+  <div class="section-head">
+    <h2>สถานะการจองของฉัน</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>หอพัก</th><th>ประเภทห้อง</th><th>มัดจำ</th><th>วันที่จอง</th><th>สถานะ</th></tr></thead>
+      <tbody id="myBookings"></tbody>
+    </table>
+  </div>
+</section>
+
+<footer><div class="container flex-between"><span>© 2026 DormCRU</span><a href="index.html">กลับไปค้นหาหอพัก</a></div></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+renderNav();
+if(!requireLogin('เข้าสู่ระบบเพื่อจองห้องพัก')) { /* redirect handled */ }
+
+const params = new URLSearchParams(location.search);
+const dormId = params.get('dorm');
+const roomCode = params.get('room');
+const dorm = dormId ? getDormById(dormId) : null;
+let slipData = null;
+
+function renderMyBookings(){
+  const user = currentUser();
+  const list = dbGet(DB_KEYS.BOOKINGS, []).filter(b=> user && b.userEmail === user.email).sort((a,b)=> b.createdAt - a.createdAt);
+  const tbody = document.getElementById('myBookings');
+  if(list.length===0){
+    tbody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align:center;padding:26px">ยังไม่มีประวัติการจอง</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(b=>{
+    const d = getDormById(b.dormId);
+    return `<tr>
+      <td>${d ? d.name : '(หอพักถูกลบแล้ว)'}</td>
+      <td>${b.roomLabel}</td>
+      <td>${fmtBaht(b.deposit)} บาท</td>
+      <td>${new Date(b.createdAt).toLocaleDateString('th-TH')}</td>
+      <td>${statusPill(b.status)}</td>
+    </tr>`;
+  }).join('');
+}
+
+if(dorm && roomCode && currentUser()){
+  const room = dorm.rooms.find(r=>r.code===roomCode);
+  document.getElementById('bookingFormSection').style.display='block';
+  const deposit = Math.round(room.price * 0.5);
+  document.getElementById('depositAmount').textContent = fmtBaht(deposit);
+  document.getElementById('bookingSummary').innerHTML = `
+    <h3 style="margin-top:0">${dorm.name}</h3>
+    <p class="muted">ประเภทห้อง: ${room.label} · ราคา ${fmtBaht(room.price)} บาท/เดือน</p>
+    <p class="muted">มัดจำที่ต้องชำระ: <strong style="color:var(--forest)">${fmtBaht(deposit)} บาท</strong></p>
+    <p class="form-hint">หลังอัปโหลดสลิป สถานะจะเป็น "รอตรวจสอบยอดเงิน" เจ้าของหอจะยืนยันภายใน 24 ชม.</p>
+  `;
+
+  const dropZone = document.getElementById('dropZone');
+  const slipInput = document.getElementById('slipInput');
+  dropZone.addEventListener('click', ()=> slipInput.click());
+  slipInput.addEventListener('change', ()=>{
+    const file = slipInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      slipData = e.target.result;
+      document.getElementById('previewImg').src = slipData;
+      document.getElementById('previewWrap').style.display='block';
+      document.getElementById('dropText').textContent = '✅ แนบไฟล์แล้ว: ' + file.name;
+      dropZone.classList.add('has-file');
+      document.getElementById('slipErr').style.display='none';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('btnConfirm').addEventListener('click', ()=>{
+    if(!slipData){ document.getElementById('slipErr').style.display='block'; return; }
+    const user = currentUser();
+    const dorms = getDorms();
+    const dIdx = dorms.findIndex(x=>x.id===dorm.id);
+    const rIdx = dorms[dIdx].rooms.findIndex(r=>r.code===roomCode);
+    if(dorms[dIdx].rooms[rIdx].vacant <= 0){ toast('ขออภัย ห้องนี้เพิ่งเต็ม','error'); return; }
+
+    const bookings = dbGet(DB_KEYS.BOOKINGS, []);
+    bookings.push({
+      id: 'bk' + Date.now(),
+      dormId: dorm.id, roomCode, roomLabel: room.label,
+      deposit, slip: slipData, status: 'pending',
+      userEmail: user.email, userName: user.name,
+      createdAt: Date.now()
+    });
+    dbSet(DB_KEYS.BOOKINGS, bookings);
+    toast('ส่งคำขอจองสำเร็จ รอตรวจสอบยอดเงิน','success');
+    document.getElementById('bookingFormSection').style.display='none';
+    renderMyBookings();
+    history.replaceState(null,'','booking.html');
+  });
+}
+renderMyBookings();
+</script>
+</body>
+</html>

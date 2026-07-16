@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายละเอียดหอพัก — DormCRU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="topbar"><div class="container" id="site-nav"></div></header>
+
+<div class="container detail-hero" id="detailRoot"></div>
+
+<div class="modal-backdrop" id="imgModal">
+  <div class="modal">
+    <button class="modal-close" id="closeModal">✕</button>
+    <img id="modalImg" src="" alt="">
+  </div>
+</div>
+
+<footer>
+  <div class="container flex-between">
+    <span>© 2026 DormCRU — โปรเจคหอพักนักศึกษา มหาวิทยาลัยราชภัฏเชียงราย</span>
+    <a href="index.html">กลับไปค้นหาหอพัก</a>
+  </div>
+</footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+renderNav('search');
+
+const params = new URLSearchParams(location.search);
+const dorm = getDormById(params.get('id'));
+const root = document.getElementById('detailRoot');
+
+if(!dorm){
+  root.innerHTML = `<div class="empty-state"><div class="emoji">🔍</div><p>ไม่พบหอพักนี้ <a href="index.html">กลับไปค้นหา</a></p></div>`;
+}else{
+  const vac = totalVacancy(dorm);
+  root.innerHTML = `
+    <div class="breadcrumb"><a href="index.html">ค้นหาหอพัก</a> / ${dorm.name}</div>
+    <div class="gallery">
+      <div class="main-img"><img id="mainImg" src="${dorm.images[0]}" alt="${dorm.name}"></div>
+      <div class="side-imgs">
+        <img src="${dorm.images[1]||dorm.images[0]}" data-src="${dorm.images[1]||dorm.images[0]}" alt="ห้องน้ำ">
+        <img src="${dorm.images[2]||dorm.images[0]}" data-src="${dorm.images[2]||dorm.images[0]}" alt="บรรยากาศรอบๆ">
+      </div>
+    </div>
+
+    <div class="detail-layout">
+      <div>
+        <div class="detail-title-row">
+          <div>
+            <h1>${dorm.name}</h1>
+            <div class="card-meta">
+              <span class="walk-chip">🚶 ${dorm.distFront.toFixed(1)} กม. จากประตูหน้ามอ</span>
+              <span class="walk-chip">🚶 ${dorm.distBack.toFixed(1)} กม. จากประตูหลังมอ</span>
+            </div>
+          </div>
+          <button class="wishlist-btn active" style="position:static" id="wishBtn">${getWishlist().includes(dorm.id)?'❤️':'🤍'}</button>
+        </div>
+        <div class="chip-row"><span class="chip">${dorm.hallType}</span><span class="chip">${vac} ห้องว่าง</span></div>
+        <p>${dorm.desc}</p>
+
+        <h3>สิ่งอำนวยความสะดวก</h3>
+        <div class="amenity-grid">${amenityGridHtml(dorm.facilities)}</div>
+
+        <h3>แผนที่</h3>
+        <div class="map-embed">
+          <iframe src="${mapEmbedUrl(dorm.lat, dorm.lng)}" loading="lazy" title="แผนที่ ${dorm.name}"></iframe>
+        </div>
+      </div>
+
+      <div class="booking-card">
+        <div class="muted" style="font-size:.85rem">เริ่มต้น</div>
+        <div class="amount-big">${fmtBaht(minPrice(dorm))} บาท<span style="font-size:.9rem;font-weight:400"> /เดือน</span></div>
+        <div class="room-type-list" id="roomList">
+          ${dorm.rooms.map((r,i)=>`
+            <label class="room-type-item ${i===0?'selected':''}" data-room="${r.code}">
+              <span><input type="radio" name="roomType" value="${r.code}" ${i===0?'checked':''}> ${r.label}</span>
+              <span>${fmtBaht(r.price)} บาท · ${r.vacant>0? r.vacant+' ว่าง':'เต็ม'}</span>
+            </label>`).join('')}
+        </div>
+        <button class="btn btn-primary btn-block" id="btnBook">จองห้องพักนี้</button>
+        <p class="form-hint">กดจองแล้วอัปโหลดสลิปโอนเงินมัดจำในขั้นตอนถัดไป</p>
+      </div>
+    </div>
+  `;
+
+  document.querySelectorAll('.room-type-item').forEach(item=>{
+    item.addEventListener('click', ()=>{
+      document.querySelectorAll('.room-type-item').forEach(i=>i.classList.remove('selected'));
+      item.classList.add('selected');
+      item.querySelector('input').checked = true;
+    });
+  });
+  document.querySelectorAll('.side-imgs img').forEach(img=>{
+    img.addEventListener('click', ()=>{ document.getElementById('mainImg').src = img.dataset.src; });
+  });
+  document.querySelectorAll('#mainImg, .side-imgs img').forEach(img=>{
+    img.addEventListener('click', ()=>{
+      document.getElementById('modalImg').src = img.src;
+      document.getElementById('imgModal').classList.add('open');
+    });
+  });
+  document.getElementById('closeModal').addEventListener('click', ()=> document.getElementById('imgModal').classList.remove('open'));
+  document.getElementById('imgModal').addEventListener('click', (e)=>{ if(e.target.id==='imgModal') e.currentTarget.classList.remove('open'); });
+
+  document.getElementById('wishBtn').addEventListener('click', ()=>{
+    const now = toggleWishlist(dorm.id);
+    if(now !== false){
+      document.getElementById('wishBtn').textContent = now ? '❤️' : '🤍';
+      toast(now ? 'บันทึกเข้ารายการที่ถูกใจแล้ว' : 'นำออกจากรายการที่ถูกใจแล้ว','success');
+    }
+  });
+
+  document.getElementById('btnBook').addEventListener('click', ()=>{
+    const selected = document.querySelector('input[name="roomType"]:checked').value;
+    const room = dorm.rooms.find(r=>r.code===selected);
+    if(room.vacant <= 0){ toast('ห้องประเภทนี้เต็มแล้ว','error'); return; }
+    if(!requireLogin('กรุณาเข้าสู่ระบบก่อนทำการจอง')) return;
+    location.href = `booking.html?dorm=${dorm.id}&room=${selected}`;
+  });
+}
+</script>
+</body>
+</html>
