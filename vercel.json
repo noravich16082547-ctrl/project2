@@ -1,7 +1,0 @@
-{
-  "cleanUrls": true,
-  "rewrites": [
-    { "source": "/dorm/:id", "destination": "/dorm-detail.html?id=:id" },
-    { "source": "/admin", "destination": "/admin-login.html" }
-  ]
-}
