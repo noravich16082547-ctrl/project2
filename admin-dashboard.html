@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>หลังบ้าน — DormCRU</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="container">
+    <a href="admin-dashboard.html" class="brand"><span class="dot"></span>DormCRU หลังบ้าน</a>
+    <div class="nav-links">
+      <a href="index.html">ดูเว็บฝั่งนักศึกษา</a>
+      <a href="#" id="adminLogout">ออกจากระบบ</a>
+    </div>
+  </div>
+</header>
+
+<div class="dash-shell">
+  <aside class="dash-side">
+    <div class="side-title">เมนูจัดการ</div>
+    <button class="side-link active" data-sec="overview">📊 ภาพรวม</button>
+    <button class="side-link" data-sec="listings">🏠 จัดการห้องพัก</button>
+    <button class="side-link" data-sec="bookings">🧾 ตรวจสอบการจอง</button>
+  </aside>
+
+  <main class="dash-main">
+    <!-- OVERVIEW -->
+    <div id="sec-overview">
+      <h2>ภาพรวมระบบ</h2>
+      <div class="stat-row">
+        <div class="stat-card"><div class="num" id="statDorms">0</div><div class="label">หอพักทั้งหมด</div></div>
+        <div class="stat-card"><div class="num" id="statVacant">0</div><div class="label">ห้องว่างรวม</div></div>
+        <div class="stat-card"><div class="num" id="statPending">0</div><div class="label">รอตรวจสอบยอดเงิน</div></div>
+        <div class="stat-card"><div class="num" id="statConfirmed">0</div><div class="label">จองสำเร็จแล้ว</div></div>
+      </div>
+      <div class="qr-box">
+        <img id="qrcode2" width="100" height="100" alt="QR โค้ดของเว็บไซต์ DormCRU" style="background:#fff;border-radius:8px">
+        <div>
+          <h3 style="color:#fff">QR โค้ดของเว็บไซต์</h3>
+          <p style="color:rgba(255,255,255,.75);margin:0">แชร์ให้เจ้าของหอพักหรือน้องนักศึกษาสแกนเข้าเว็บได้ทันที ใช้ได้ทั้งมือถือและคอม</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- LISTINGS -->
+    <div id="sec-listings" style="display:none">
+      <div class="section-head"><h2>จัดการห้องพัก</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>หอพัก</th><th>ประเภท</th><th>ห้อง/ราคา</th><th>ว่าง/ทั้งหมด</th><th>จัดการ</th></tr></thead>
+          <tbody id="listingTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div id="sec-bookings" style="display:none">
+      <div class="section-head"><h2>ตรวจสอบการจอง</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>นักศึกษา</th><th>หอพัก</th><th>ห้อง</th><th>มัดจำ</th><th>สลิป</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+          <tbody id="bookingTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="editModal">
+  <div class="modal">
+    <button class="modal-close" id="closeEditModal">✕</button>
+    <h3 id="editTitle">แก้ไขห้องพัก</h3>
+    <div id="editRoomsForm"></div>
+    <div class="form-field">
+      <label>เพิ่มลิงก์รูปภาพใหม่ (URL)</label>
+      <input type="text" id="newImgUrl" placeholder="https://...">
+    </div>
+    <button class="btn btn-primary btn-block" id="saveEdit">บันทึกการเปลี่ยนแปลง</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="slipModal">
+  <div class="modal">
+    <button class="modal-close" id="closeSlipModal">✕</button>
+    <h3>สลิปโอนเงินมัดจำ</h3>
+    <img id="slipModalImg" src="" style="width:100%">
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+if(!currentAdmin()){
+  toast('กรุณาเข้าสู่ระบบหลังบ้านก่อน','error');
+  setTimeout(()=> location.href='admin-login.html', 700);
+}
+document.getElementById('adminLogout').addEventListener('click',(e)=>{
+  e.preventDefault();
+  localStorage.removeItem(DB_KEYS.ADMIN_SESSION);
+  location.href='admin-login.html';
+});
+
+document.querySelectorAll('.side-link').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.side-link').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    ['overview','listings','bookings'].forEach(s=>{
+      document.getElementById('sec-'+s).style.display = (s===btn.dataset.sec) ? 'block':'none';
+    });
+  });
+});
+
+function renderStats(){
+  const dorms = getDorms();
+  const bookings = dbGet(DB_KEYS.BOOKINGS, []);
+  document.getElementById('statDorms').textContent = dorms.length;
+  document.getElementById('statVacant').textContent = dorms.reduce((s,d)=>s+totalVacancy(d),0);
+  document.getElementById('statPending').textContent = bookings.filter(b=>b.status==='pending').length;
+  document.getElementById('statConfirmed').textContent = bookings.filter(b=>b.status==='confirmed').length;
+}
+
+function renderListings(){
+  const dorms = getDorms();
+  document.getElementById('listingTable').innerHTML = dorms.map(d=>`
+    <tr>
+      <td><strong>${d.name}</strong></td>
+      <td>${d.hallType}</td>
+      <td>${d.rooms.map(r=>`${r.label}: ${fmtBaht(r.price)}฿`).join('<br>')}</td>
+      <td>${d.rooms.map(r=>`${r.vacant}/${r.total}`).join('<br>')}</td>
+      <td><button class="btn btn-outline btn-sm" data-edit="${d.id}">แก้ไข</button></td>
+    </tr>
+  `).join('');
+  document.querySelectorAll('[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=> openEdit(btn.dataset.edit));
+  });
+}
+
+let editingId = null;
+function openEdit(id){
+  editingId = id;
+  const dorm = getDormById(id);
+  document.getElementById('editTitle').textContent = 'แก้ไข: ' + dorm.name;
+  document.getElementById('editRoomsForm').innerHTML = dorm.rooms.map((r,i)=>`
+    <div class="form-field">
+      <label>${r.label} — ราคา (บาท/เดือน)</label>
+      <input type="number" data-price="${i}" value="${r.price}">
+    </div>
+    <div class="form-field">
+      <label>${r.label} — จำนวนห้องว่าง (จากทั้งหมด ${r.total})</label>
+      <input type="number" data-vacant="${i}" value="${r.vacant}" min="0" max="${r.total}">
+    </div>
+  `).join('');
+  document.getElementById('newImgUrl').value = '';
+  document.getElementById('editModal').classList.add('open');
+}
+document.getElementById('closeEditModal').addEventListener('click', ()=> document.getElementById('editModal').classList.remove('open'));
+document.getElementById('saveEdit').addEventListener('click', ()=>{
+  const dorms = getDorms();
+  const idx = dorms.findIndex(d=>d.id===editingId);
+  const dorm = dorms[idx];
+  dorm.rooms.forEach((r,i)=>{
+    const priceInput = document.querySelector(`[data-price="${i}"]`);
+    const vacantInput = document.querySelector(`[data-vacant="${i}"]`);
+    if(priceInput) r.price = +priceInput.value;
+    if(vacantInput) r.vacant = Math.min(+vacantInput.value, r.total);
+  });
+  const newImg = document.getElementById('newImgUrl').value.trim();
+  if(newImg) dorm.images.push(newImg);
+  dorms[idx] = dorm;
+  saveDorms(dorms);
+  document.getElementById('editModal').classList.remove('open');
+  toast('บันทึกข้อมูลหอพักแล้ว','success');
+  renderListings(); renderStats();
+});
+
+function renderBookings(){
+  const bookings = dbGet(DB_KEYS.BOOKINGS, []).sort((a,b)=>b.createdAt-a.createdAt);
+  document.getElementById('bookingTable').innerHTML = bookings.map(b=>{
+    const dorm = getDormById(b.dormId);
+    return `<tr>
+      <td>${b.userName}</td>
+      <td>${dorm ? dorm.name : '-'}</td>
+      <td>${b.roomLabel}</td>
+      <td>${fmtBaht(b.deposit)}฿</td>
+      <td><img class="slip-thumb" src="${b.slip}" data-slip="${b.id}"></td>
+      <td>${statusPill(b.status)}</td>
+      <td class="row-actions">
+        ${b.status==='pending' ? `
+          <button class="btn btn-sm btn-approve" data-approve="${b.id}">ยืนยัน</button>
+          <button class="btn btn-sm btn-reject" data-reject="${b.id}">ปฏิเสธ</button>` : '<span class="muted">—</span>'}
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" class="muted" style="text-align:center;padding:26px">ยังไม่มีรายการจอง</td></tr>`;
+
+  document.querySelectorAll('[data-slip]').forEach(img=>{
+    img.addEventListener('click', ()=>{
+      const b = bookings.find(x=>x.id===img.dataset.slip);
+      document.getElementById('slipModalImg').src = b.slip;
+      document.getElementById('slipModal').classList.add('open');
+    });
+  });
+  document.querySelectorAll('[data-approve]').forEach(btn=>{
+    btn.addEventListener('click', ()=> updateBooking(btn.dataset.approve, 'confirmed'));
+  });
+  document.querySelectorAll('[data-reject]').forEach(btn=>{
+    btn.addEventListener('click', ()=> updateBooking(btn.dataset.reject, 'cancelled'));
+  });
+}
+
+function updateBooking(id, status){
+  const bookings = dbGet(DB_KEYS.BOOKINGS, []);
+  const b = bookings.find(x=>x.id===id);
+  if(!b) return;
+  b.status = status;
+  dbSet(DB_KEYS.BOOKINGS, bookings);
+  if(status==='confirmed'){
+    const dorms = getDorms();
+    const dorm = dorms.find(d=>d.id===b.dormId);
+    if(dorm){
+      const room = dorm.rooms.find(r=>r.code===b.roomCode);
+      if(room && room.vacant>0) room.vacant -= 1;
+      saveDorms(dorms);
+    }
+  }
+  toast(status==='confirmed' ? 'ยืนยันการจองแล้ว ตัดห้องว่างอัตโนมัติ' : 'ปฏิเสธการจองแล้ว','success');
+  renderBookings(); renderListings(); renderStats();
+}
+
+document.getElementById('closeSlipModal').addEventListener('click', ()=> document.getElementById('slipModal').classList.remove('open'));
+[['editModal'],['slipModal']].forEach(([id])=>{
+  document.getElementById(id).addEventListener('click',(e)=>{ if(e.target.id===id) e.currentTarget.classList.remove('open'); });
+});
+
+renderStats(); renderListings(); renderBookings();
+
+// QR code is decorative only — generated via a simple <img>, never via a
+// blocking third-party script, so it can never break the dashboard above.
+try{
+  const qrUrl = location.href.replace(/admin-dashboard\.html.*$/,'');
+  document.getElementById('qrcode2').src =
+    'https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=1F3A2E&bgcolor=ffffff&data=' + encodeURIComponent(qrUrl);
+}catch(e){ /* QR code is non-essential, ignore failures */ }
+</script>
+</body>
+</html>
