@@ -9,7 +9,7 @@
    ก่อนเสมอ ถ้ายังไม่ตั้งค่าจะโชว์แบนเนอร์เตือนแทนที่จะพังเงียบๆ
    ========================================================================== */
 
-const SUPABASE_URL = "https://supabase.com/dashboard/project/uhtkwvayfayzbrfqsenp/sql/b4811cc9-f531-4527-a4fe-58b334357153";
+const SUPABASE_URL = "https://supabase.com/dashboard/project/uhtkwvayfayzbrfqsenp";
 const SUPABASE_ANON_KEY = "uhtkwvayfayzbrfqsenp";
 
 function isSupabaseConfigured(){
