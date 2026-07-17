@@ -9,8 +9,8 @@
    ก่อนเสมอ ถ้ายังไม่ตั้งค่าจะโชว์แบนเนอร์เตือนแทนที่จะพังเงียบๆ
    ========================================================================== */
 
-const SUPABASE_URL = "https://uhtkwvayfayzbrfqsenp.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVodGt3dmF5ZmF5emJyZnFzZW5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyNjMzNjUsImV4cCI6MjA5OTgzOTM2NX0.xhKL4K59HSRF0aLK5aEvlf7xw977QL5UzqFDFyJRyD0";
+const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_ANON_PUBLIC_KEY";
 
 function isSupabaseConfigured(){
   return !SUPABASE_URL.includes('YOUR_PROJECT') && !SUPABASE_ANON_KEY.includes('YOUR_ANON');
@@ -192,7 +192,7 @@ function toDormRow(d){
     name: d.name, hall_type: d.hallType,
     gate1: d.gates.gate1, gate2: d.gates.gate2, gate3: d.gates.gate3,
     lat: d.lat, lng: d.lng, facilities: d.facilities, rooms: d.rooms,
-    images: d.images, desc: d.desc,
+    images: d.images, description: d.desc,
     phone: d.phone || null, line_id: d.lineId || null, facebook: d.facebook || null
   };
   if(typeof d.verified === 'boolean') row.verified = d.verified;
@@ -204,7 +204,7 @@ function mapDormRow(row){
     gates: { gate1: Number(row.gate1), gate2: Number(row.gate2), gate3: Number(row.gate3) },
     lat: Number(row.lat), lng: Number(row.lng),
     facilities: row.facilities || [], rooms: row.rooms || [],
-    images: row.images || [], desc: row.desc,
+    images: row.images || [], desc: row.description,
     phone: row.phone || '', lineId: row.line_id || '', facebook: row.facebook || '',
     verified: !!row.verified
   };

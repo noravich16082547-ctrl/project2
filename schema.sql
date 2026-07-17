@@ -36,7 +36,7 @@ create table if not exists dorms (
   facilities text[] not null default '{}',
   rooms jsonb not null default '[]', -- [{code,label,price,total,vacant}, ...]
   images text[] not null default '{}',
-  desc text,
+  description text,  -- รายละเอียดหอพัก (ห้ามใช้ชื่อ desc เพราะเป็นคำสงวนของ SQL)
   phone text,      -- เบอร์โทรหอพัก
   line_id text,    -- LINE ID หรือลิงก์ LINE
   facebook text,   -- ลิงก์เพจ Facebook
@@ -182,8 +182,17 @@ using (is_admin() or (is_approved_owner() and owner_id = auth.uid()));
 
 -- ============================================================================
 -- เปิด Realtime สำหรับตาราง dorms (ให้หน้าแรกเห็นห้องว่างอัปเดตสดโดยไม่ต้องรีเฟรช)
+-- ห่อด้วย do-block เช็คก่อน เพื่อให้รันไฟล์นี้ซ้ำได้โดยไม่ชน error "already member"
 -- ============================================================================
-alter publication supabase_realtime add table dorms;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'dorms'
+  ) then
+    alter publication supabase_realtime add table dorms;
+  end if;
+end $$;
 
 -- ============================================================================
 -- Storage bucket สำหรับสลิปโอนเงิน (ตั้งเป็น public เพื่อความง่าย — ดูหมายเหตุใน SETUP-SUPABASE.md)
